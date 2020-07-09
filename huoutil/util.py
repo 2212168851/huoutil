@@ -234,10 +234,27 @@ class ConfigBase(object):
         return self.__str__()
 
 
-def load_python_conf(conf_path, module_name='config'):
+class NewConfig(object):
+    def __init__(self, obj, default_property=False):
+        self._default_property = default_property
+        for name, value in obj.__dict__.items():
+            if name.startswith('__'):
+                continue
+            else:
+                setattr(self, name, value)
+
+    def __getattr__(self, attr):
+        if self._default_property:
+            if attr not in self.__dict__:
+                return None
+        raise AttributeError("'{}' object has no attribute '{}'".format(type(self).__name__, attr))
+
+
+def load_python_conf(conf_path, module_name='config', default_property=False):
     import imp
     config = imp.load_module(module_name, open(conf_path), conf_path, ('', 'r', imp.PY_SOURCE))
-    return config
+    newconfig = NewConfig(config, default_property)
+    return newconfig
 
 
 def mkdir(dir_name):
@@ -295,6 +312,12 @@ def init_log(log_path,
         dir = './'
     if not os.path.isdir(dir):
         os.makedirs(dir)
+
+    #该logger为root logger，其上可能会被加入多个StreamHandler输出到std,
+    #一般我们只需要一个stdout就行，所以在stdout新加之前，去掉root logger上原有的所有StreamHandler
+    for handler in logger.handlers:
+        if isinstance(handler, logging.StreamHandler):
+            logger.removeHandler(handler)
 
     if stdout:
         stdout_handler = logging.StreamHandler(sys.stdout)

@@ -6,8 +6,9 @@ import sys
 
 sys.path.insert(0, '.')
 from huoutil.util import ConfigBase
-from huoutil.util import file2dictlist, file2list, file2set
+from huoutil.util import file2dictlist, file2list, file2set, load_python_conf
 from huoutil.uni import standard_string_format
+import pytest
 TESTDATA = './tests/testdata/'
 
 
@@ -55,8 +56,22 @@ def test_file2dictlist():
 def test_cleandata():
     s = '贫血，头晕？【】［伯格］eN^? Ⅵ腹痛Ⅹ'
     tmp = 'Ⅰ、Ⅱ、Ⅲ、Ⅳ、Ⅴ、Ⅵ、Ⅶ、Ⅷ、Ⅸ、Ⅹ、Ⅺ、Ⅻ'
-    clean_s = standard_string_format(s,upper=1)
+    clean_s = standard_string_format(s, upper=1)
     assert clean_s == '贫血,头晕?[][伯格]ENVI腹痛X'
     s = 'Ⅰ、Ⅱ、Ⅲ、Ⅳ、Ⅴ、Ⅵ、Ⅶ、Ⅷ、Ⅸ、Ⅹ、Ⅺ、Ⅻ'
-    clean_s = standard_string_format(s,lower=1)
+    clean_s = standard_string_format(s, lower=1)
     assert clean_s == 'i、ii、iii、iv、v、vi、vii、viii、ix、x、xi、xii'
+
+
+def test_load_python_conf():
+    conf_path = os.path.join(TESTDATA, 'test_python.conf')
+    newconfig = load_python_conf(conf_path, default_property=True)
+    assert newconfig.bf_fpmutual_manrule == True
+    assert newconfig.askdjsldlk == None
+    newconfig.bf_fpmutual_manrule = "OK平"
+    assert newconfig.bf_fpmutual_manrule == "OK平"
+    assert newconfig.askdjsldlk == None
+
+    newconfig = load_python_conf(conf_path, default_property=False)
+    with pytest.raises(AttributeError):
+        assert newconfig.sd23sdfsd == None
